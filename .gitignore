@@ -1,0 +1,32 @@
+# Data directories
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/robustness_test_set/*
+!data/robustness_test_set/.gitkeep
+
+# Model checkpoints
+models/**/*.pth
+models/**/*.pt
+models/**/*.onnx
+*.pth
+*.pt
+
+# Python caches & virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & logs
+database/*.db
+*.log
+.env
+.DS_Store
+Thumbs.db

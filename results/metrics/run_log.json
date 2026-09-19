@@ -1,0 +1,148 @@
+[
+  {
+    "timestamp": "2026-08-20T12:42:42.502531",
+    "model_name": "resnet50",
+    "seed": 42,
+    "device": "cpu",
+    "dry_run": false,
+    "epochs_trained": 3,
+    "total_time_sec": 161.2,
+    "hyperparameters": {
+      "lr": 0.0005,
+      "batch_size": 32,
+      "weight_decay": 0.0001,
+      "label_smoothing": 0.05
+    },
+    "best_metrics": {
+      "val_f1": 0.0502,
+      "val_loss": 2.5361
+    },
+    "checkpoint_path": "C:\\Users\\clash\\Downloads\\whatappp\\models\\resnet50\\best_model.pth",
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 3.5250614478175804,
+        "train_acc": 0.042606516290726815,
+        "val_loss": 3.0157080201541677,
+        "val_acc": 0.10588235294117647,
+        "val_f1": 0.03028955078704198,
+        "lr": 0.00037525000000000004,
+        "duration_sec": 57.04689264297485
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.782170003518126,
+        "train_acc": 0.14035087719298245,
+        "val_loss": 2.9492038754855887,
+        "val_acc": 0.09411764705882353,
+        "val_f1": 0.02952172096908939,
+        "lr": 0.00012575000000000005,
+        "duration_sec": 51.387027978897095
+      },
+      {
+        "epoch": 3,
+        "train_loss": 2.520692056880559,
+        "train_acc": 0.18796992481203006,
+        "val_loss": 2.536063755259794,
+        "val_acc": 0.11764705882352941,
+        "val_f1": 0.050237135901955846,
+        "lr": 1e-06,
+        "duration_sec": 52.31981444358826
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-08-20T12:44:14.210305",
+    "model_name": "efficientnet_b0",
+    "seed": 42,
+    "device": "cpu",
+    "dry_run": false,
+    "epochs_trained": 3,
+    "total_time_sec": 77.83,
+    "hyperparameters": {
+      "lr": 0.0005,
+      "batch_size": 32,
+      "weight_decay": 0.0001,
+      "label_smoothing": 0.05
+    },
+    "best_metrics": {
+      "val_f1": 0.1113,
+      "val_loss": 2.6704
+    },
+    "checkpoint_path": "C:\\Users\\clash\\Downloads\\whatappp\\models\\efficientnet_b0\\best_model.pth",
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 3.5330939197301268,
+        "train_acc": 0.07518796992481203,
+        "val_loss": 3.322482198827407,
+        "val_acc": 0.12941176470588237,
+        "val_f1": 0.05558232702969545,
+        "lr": 0.00037525000000000004,
+        "duration_sec": 26.580411911010742
+      },
+      {
+        "epoch": 2,
+        "train_loss": 3.002807479753231,
+        "train_acc": 0.16290726817042606,
+        "val_loss": 2.7802060435799993,
+        "val_acc": 0.10588235294117647,
+        "val_f1": 0.054889942246921654,
+        "lr": 0.00012575000000000005,
+        "duration_sec": 25.11005449295044
+      },
+      {
+        "epoch": 3,
+        "train_loss": 2.6919524400754082,
+        "train_acc": 0.19298245614035087,
+        "val_loss": 2.670372657214894,
+        "val_acc": 0.15294117647058825,
+        "val_f1": 0.11130136407144717,
+        "lr": 1e-06,
+        "duration_sec": 25.98393726348877
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-08-20T12:50:23.914811",
+    "model_name": "vit_b_16",
+    "seed": 42,
+    "device": "cpu",
+    "dry_run": false,
+    "epochs_trained": 2,
+    "total_time_sec": 268.71,
+    "hyperparameters": {
+      "lr": 0.0001,
+      "batch_size": 16,
+      "weight_decay": 5e-05,
+      "label_smoothing": 0.05
+    },
+    "best_metrics": {
+      "val_f1": 0.0296,
+      "val_loss": 2.6763
+    },
+    "checkpoint_path": "C:\\Users\\clash\\Downloads\\whatappp\\models\\vit_b_16\\best_model.pth",
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 3.528707479175768,
+        "train_acc": 0.040100250626566414,
+        "val_loss": 3.0238198168137496,
+        "val_acc": 0.09411764705882353,
+        "val_f1": 0.023434177058603237,
+        "lr": 5.05e-05,
+        "duration_sec": 131.42819452285767
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.818894582284722,
+        "train_acc": 0.08521303258145363,
+        "val_loss": 2.676261312821332,
+        "val_acc": 0.09411764705882353,
+        "val_f1": 0.029637766527631844,
+        "lr": 1e-06,
+        "duration_sec": 135.83499264717102
+      }
+    ]
+  }
+]

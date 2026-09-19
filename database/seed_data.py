@@ -1,0 +1,448 @@
+"""Curated agricultural knowledge base seed script with verified extension citations."""
+
+import sqlite3
+import logging
+from datetime import datetime
+from pathlib import Path
+
+DB_DIR = Path(__file__).resolve().parent
+DB_PATH = DB_DIR / "plantcare.db"
+SCHEMA_PATH = DB_DIR / "schema.sql"
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("PlantCare.Database")
+
+SEED_ENTRIES = [
+    {
+        "disease_class": "Apple___Apple_scab",
+        "plant_name": "Apple",
+        "disease_name": "Apple Scab (Venturia inaequalis)",
+        "symptoms": "Olive-green to dark brown velvety spots on leaf surfaces and fruit lesions.",
+        "prevention": "Prune canopy for adequate sunlight and airflow; rake and destroy fallen leaves in autumn; plant resistant cultivars.",
+        "treatment": "Apply university-recommended protective fungicide sprays in early spring at green tip stage. Consult local agricultural extension officer for approved local fungicides and timings.",
+        "source_citation": "Cornell Cooperative Extension - Apple Disease Management Guidelines (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Apple___Black_rot",
+        "plant_name": "Apple",
+        "disease_name": "Black Rot (Botryosphaeria obtusa)",
+        "symptoms": "Frogeye leaf spots with purple margins and brown centers; rotting fruit turning black with pycnidia.",
+        "prevention": "Prune dead wood and remove mummified fruit from trees and orchard floor; maintain tree vigor with balanced nutrition.",
+        "treatment": "Apply labeled fungicides from silver tip through petal fall. Consult local agricultural extension officer for specific product selection and safety intervals.",
+        "source_citation": "Penn State Extension - Fruit Production Guide (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Apple___Cedar_apple_rust",
+        "plant_name": "Apple",
+        "disease_name": "Cedar Apple Rust (Gymnosporangium juniperi-virginianae)",
+        "symptoms": "Bright yellow-orange spots on upper leaf surface with tiny black specks, later forming tube-like structures on underside.",
+        "prevention": "Remove nearby eastern red cedar and juniper hosts within 1-2 miles if feasible; plant rust-resistant apple varieties.",
+        "treatment": "Apply preventative fungicide sprays from pink bud through petal fall. Consult local agricultural extension officer for regional spray schedules.",
+        "source_citation": "Purdue University Extension - Apple Rust Diseases (BP-35-W)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Apple___healthy",
+        "plant_name": "Apple",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Clean, vibrant green leaves with no visible lesions, chlorosis, or necrotic spots.",
+        "prevention": "Maintain regular irrigation, balanced N-P-K fertilization, seasonal pruning, and routine scouting.",
+        "treatment": "No treatment required. Continue standard preventative orchard management.",
+        "source_citation": "FAO Good Agricultural Practices (GAP) for Pome Fruit (2023)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Blueberry___healthy",
+        "plant_name": "Blueberry",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Uniform green leaves with smooth margins and normal venation.",
+        "prevention": "Maintain soil pH between 4.5 and 5.5, apply organic mulch (pine bark/sawdust), and ensure consistent moisture.",
+        "treatment": "No treatment required. Continue routine monitoring for pest and disease presence.",
+        "source_citation": "Michigan State University Extension - Blueberry Management Guide",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Cherry_(including_sour)___Powdery_mildew",
+        "plant_name": "Cherry",
+        "disease_name": "Powdery Mildew (Podosphaera clandestina)",
+        "symptoms": "White powdery fungal patches on young leaves, leaf curling, and stunted shoot growth.",
+        "prevention": "Prune dense canopies to maximize air circulation and sunlight penetration; avoid excessive nitrogen fertilizer.",
+        "treatment": "Apply sulfur or approved biorational fungicides at petal fall and shuck fall. Consult local agricultural extension officer for specific product registrations.",
+        "source_citation": "UC Davis IPM Guidelines for Cherry Powdery Mildew (2023)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Cherry_(including_sour)___healthy",
+        "plant_name": "Cherry",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Glossy green leaves free of fungal growth, spots, or discoloration.",
+        "prevention": "Maintain adequate tree spacing, drip irrigation, and annual sanitation pruning.",
+        "treatment": "No treatment required. Continue baseline integrated pest management.",
+        "source_citation": "Washington State University Tree Fruit Research & Extension Center",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+        "plant_name": "Corn",
+        "disease_name": "Gray Leaf Spot (Cercospora zeae-maydis)",
+        "symptoms": "Rectangular, tan to grayish lesions strictly bounded by leaf veins.",
+        "prevention": "Rotate crops with non-host plants (soybean); practice residue tillage; select resistant hybrid varieties.",
+        "treatment": "Scout during tasseling stage; apply registered foliar fungicides if disease thresholds are met. Consult local agricultural extension officer for economic threshold guidance.",
+        "source_citation": "Iowa State University Extension - Corn Field Crop IPM (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Corn_(maize)___Common_rust_",
+        "plant_name": "Corn",
+        "disease_name": "Common Rust (Puccinia sorghi)",
+        "symptoms": "Golden-brown to cinnamon-brown pustules (uredinia) scattered across both upper and lower leaf surfaces.",
+        "prevention": "Plant resistant corn hybrids; sow early in the season to avoid late-summer peak spore loads.",
+        "treatment": "Fungicide application is rarely required except in high-value seed corn or severe early infections. Consult local agricultural extension officer for product guidelines.",
+        "source_citation": "University of Illinois Extension - Corn Rust Management",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Corn_(maize)___Northern_Leaf_Blight",
+        "plant_name": "Corn",
+        "disease_name": "Northern Corn Leaf Blight (Exserohilum turcicum)",
+        "symptoms": "Long, elliptical, cigar-shaped grayish-green to tan lesions on lower leaves progressing upward.",
+        "prevention": "Crop rotation with non-hosts, residue incorporation, and planting resistant hybrids with Ht genes.",
+        "treatment": "Apply targeted foliar fungicides at VT-R1 stage when weather favors disease. Consult local agricultural extension officer for timing.",
+        "source_citation": "ICAR-Indian Institute of Maize Research - Crop Protection Manual",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Corn_(maize)___healthy",
+        "plant_name": "Corn",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Robust, deep-green foliage without lesions, striping, or fungal pustules.",
+        "prevention": "Ensure balanced soil nitrogen, proper plant population density, and weed suppression.",
+        "treatment": "No treatment required. Maintain standard agronomic management.",
+        "source_citation": "FAO Crop Production Manual - Maize (2023)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Grape___Black_rot",
+        "plant_name": "Grape",
+        "disease_name": "Black Rot (Guignardia bidwellii)",
+        "symptoms": "Small reddish-brown circular spots on leaves with tiny black pycnidia; shriveled black mummified berries.",
+        "prevention": "Remove mummies during dormant pruning; ensure canopy training allows sunlight exposure; mow ground cover.",
+        "treatment": "Apply preventative fungicide sprays from early bud break to veraison. Consult local agricultural extension officer for local spray programs.",
+        "source_citation": "Ohio State University Extension - Grape Disease Management (PLPATH-FRU-24)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Grape___Esca_(Black_Measles)",
+        "plant_name": "Grape",
+        "disease_name": "Esca / Black Measles Complex",
+        "symptoms": "Interveinal chlorosis and necrosis ('tiger-stripe' pattern) on leaves, dark spots on berries, and wood decay.",
+        "prevention": "Protect pruning wounds with wound sealants or biocontrol agents; avoid pruning during wet weather; remove infected vines.",
+        "treatment": "No curative chemical exists for vascular wood decay; remediate via trunk renewal. Consult local agricultural extension officer for vineyard sanitation protocols.",
+        "source_citation": "UC Davis IPM - Grapevine Trunk Diseases & Esca (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+        "plant_name": "Grape",
+        "disease_name": "Isariopsis Leaf Blight (Pseudocercospora cladosporioides)",
+        "symptoms": "Irregular dark brown patches on mature leaves with defined margins, leading to premature defoliation.",
+        "prevention": "Prune vine canopy to promote rapid drying; clean and dispose of leaf litter at harvest.",
+        "treatment": "Apply copper-based or protective fungicides after bloom. Consult local agricultural extension officer for dosage recommendations.",
+        "source_citation": "ICAR-National Research Centre for Grapes - Technical Bulletin",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Grape___healthy",
+        "plant_name": "Grape",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Uniform broad green leaves with intact margins and normal vine vigor.",
+        "prevention": "Maintain proper trellis management, balanced irrigation, and seasonal scouting.",
+        "treatment": "No treatment required. Continue standard vineyard care.",
+        "source_citation": "FAO Viticulture Best Practices Handbook",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Orange___Haunglongbing_(Citrus_greening)",
+        "plant_name": "Orange / Citrus",
+        "disease_name": "Citrus Greening / Huanglongbing (Candidatus Liberibacter)",
+        "symptoms": "Asymmetric blotchy mottle on leaves, yellow shoots, small lopsided bitter fruit with aborted seeds.",
+        "prevention": "Plant certified disease-free nursery stock; control Asian citrus psyllid insect vectors; rogue infected trees immediately.",
+        "treatment": "No known cure once infected; manage vector populations and apply foliar micronutrients to support tree health. Consult local agricultural extension officer or state quarantine authority.",
+        "source_citation": "USDA APHIS / University of Florida IFAS - Citrus Greening Management Guidelines",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Peach___Bacterial_spot",
+        "plant_name": "Peach",
+        "disease_name": "Bacterial Spot (Xanthomonas arboricola pv. pruni)",
+        "symptoms": "Small water-soaked polygonal spots turning purple-brown, often dropping out to leave 'shot-hole' appearance.",
+        "prevention": "Plant resistant peach cultivars; avoid overhead irrigation; establish windbreaks to reduce windblown sand damage.",
+        "treatment": "Apply preventative copper or oxytetracycline sprays from bud swell through early cover. Consult local agricultural extension officer for copper sensitivity and spray programs.",
+        "source_citation": "University of Georgia Extension - Peach Disease Management",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Peach___healthy",
+        "plant_name": "Peach",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Elongated glossy green leaves without perforations, spots, or chlorosis.",
+        "prevention": "Maintain annual pruning for open vase canopy, proper fertilisation, and routine monitoring.",
+        "treatment": "No treatment required. Continue regular orchard maintenance.",
+        "source_citation": "Clemson University Cooperative Extension - Peach Care Guidelines",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Pepper,_bell___Bacterial_spot",
+        "plant_name": "Bell Pepper",
+        "disease_name": "Bacterial Spot (Xanthomonas campestris pv. vesicatoria)",
+        "symptoms": "Small, dark, water-soaked circular lesions on leaves that become brown with yellow halos, causing defoliation.",
+        "prevention": "Use certified disease-free seed; sanitize seed beds; rotate away from solanaceous crops for at least 2 years; avoid working in wet foliage.",
+        "treatment": "Apply preventative copper sprays combined with mancozeb or bio-fungicides. Consult local agricultural extension officer for resistance management guidance.",
+        "source_citation": "University of Florida IFAS - Bacterial Spot of Pepper (PP-3)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Pepper,_bell___healthy",
+        "plant_name": "Bell Pepper",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Smooth, uniform green leaves with firm stems and healthy blossom sets.",
+        "prevention": "Use drip irrigation, mulch beds to retain moisture, and supply steady calcium and potassium.",
+        "treatment": "No treatment required. Continue standard integrated crop management.",
+        "source_citation": "FAO Vegetable Production Guidelines - Solanaceous Crops",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Potato___Early_blight",
+        "plant_name": "Potato",
+        "disease_name": "Early Blight (Alternaria solani)",
+        "symptoms": "Dark brown to black spots with concentric rings ('target-board' pattern) on older lower leaves.",
+        "prevention": "Rotate crops with non-solanaceous crops (3-year rotation); maintain optimal nitrogen fertility; destroy crop debris post-harvest.",
+        "treatment": "Apply protectant fungicides when lower canopy develops symptoms. Consult local agricultural extension officer for fungicide timing and resistance rotation.",
+        "source_citation": "University of Wisconsin Extension - Potato Early Blight Management (A3839)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Potato___Late_blight",
+        "plant_name": "Potato",
+        "disease_name": "Late Blight (Phytophthora infestans)",
+        "symptoms": "Water-soaked irregular dark green/brown lesions expanding rapidly with white fungal down on leaf undersides in high humidity.",
+        "prevention": "Plant certified blight-free seed tubers; eliminate volunteer potato plants; avoid overhead watering; space rows for ventilation.",
+        "treatment": "Apply systemic or protectant anti-oomycete fungicides immediately upon local disease forecasting warnings. Consult local agricultural extension officer urgently.",
+        "source_citation": "ICAR-Central Potato Research Institute (CPRI) - Late Blight Advisory",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Potato___healthy",
+        "plant_name": "Potato",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Lush green compound leaves without necrotic rings or water-soaked lesions.",
+        "prevention": "Implement ridge hilling, balanced fertilization, and monitor field moisture.",
+        "treatment": "No treatment required. Continue regular scouting.",
+        "source_citation": "FAO Potato Production Guidelines (2023)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Raspberry___healthy",
+        "plant_name": "Raspberry",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Deep green serrated leaflets with clean underside pubescence.",
+        "prevention": "Trellis canes for air movement, prune old floricanes after harvest, and maintain root drainage.",
+        "treatment": "No treatment required. Maintain cane management and weed control.",
+        "source_citation": "Oregon State University Extension - Raspberry Production Guide",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Soybean___healthy",
+        "plant_name": "Soybean",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Trifoliate vibrant green leaves free of chlorosis, rust pustules, or mosaic mottling.",
+        "prevention": "Plant high-germination certified seed with Rhizobium inoculant; practice balanced soil fertility.",
+        "treatment": "No treatment required. Continue field scouting across reproductive stages.",
+        "source_citation": "Iowa State University Extension - Soybean Crop Guide",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Squash___Powdery_mildew",
+        "plant_name": "Squash / Cucurbit",
+        "disease_name": "Powdery Mildew (Podosphaera xanthii)",
+        "symptoms": "White talcum powder-like fungal growth across upper and lower surfaces of leaves and petioles.",
+        "prevention": "Choose powdery mildew-resistant cultivars; maintain wide plant spacing for aeration; avoid late overhead irrigation.",
+        "treatment": "Apply potassium bicarbonate, horticultural oils, or registered systemic fungicides at first sign of white spots. Consult local agricultural extension officer for product choices.",
+        "source_citation": "Cornell University - Vegetable MD Online Cucurbit Powdery Mildew",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Strawberry___Leaf_scorch",
+        "plant_name": "Strawberry",
+        "disease_name": "Leaf Scorch (Diplocarpon earlianum)",
+        "symptoms": "Numerous small, irregular purplish-red spots that enlarge and merge, causing leaf tissue between spots to turn brown and scorch.",
+        "prevention": "Plant in well-drained soil with full sun exposure; avoid overhead watering; remove old infected leaves during renovation.",
+        "treatment": "Apply preventative fungicide sprays before bloom and during post-harvest renovation. Consult local agricultural extension officer for regional spray recommendations.",
+        "source_citation": "North Carolina State University Extension - Strawberry Disease Management",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Strawberry___healthy",
+        "plant_name": "Strawberry",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Glossy green trifoliate leaves with intact serrations and healthy runners.",
+        "prevention": "Use straw mulch to keep leaves off soil, maintain drip irrigation, and scout regularly for aphids and mites.",
+        "treatment": "No treatment required. Continue routine strawberry bed care.",
+        "source_citation": "University of California IPM - Strawberry Pest Management",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Bacterial_spot",
+        "plant_name": "Tomato",
+        "disease_name": "Bacterial Spot (Xanthomonas spp.)",
+        "symptoms": "Small, dark, greasy or water-soaked circular spots on leaves; spots turn dark brown with yellowish halo and center may drop.",
+        "prevention": "Use pathogen-free certified seeds and transplants; avoid overhead irrigation; sanitize tools and stakes; rotate with non-host crops.",
+        "treatment": "Apply preventative copper plus mancozeb sprays or bio-fungicides. Consult local agricultural extension officer for local timing and bactericide resistance guidance.",
+        "source_citation": "Purdue University Extension - Bacterial Spot of Tomato (BP-56-W)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Early_blight",
+        "plant_name": "Tomato",
+        "disease_name": "Early Blight (Alternaria solani)",
+        "symptoms": "Circular brown to black spots with distinct concentric rings ('target' pattern) surrounded by yellow chlorotic halo on lower leaves.",
+        "prevention": "Mulch soil to prevent rain-splash from soil; prune lower suckers/leaves; stake plants for airflow; rotate out of solanaceous crops for 3 years.",
+        "treatment": "Remove infected lower foliage; apply protectant fungicides (e.g. chlorothalonil/copper) at first appearance. Consult local agricultural extension officer for specific product labels.",
+        "source_citation": "University of Maryland Extension - Early Blight on Tomatoes (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Late_blight",
+        "plant_name": "Tomato",
+        "disease_name": "Late Blight (Phytophthora infestans)",
+        "symptoms": "Large, irregular water-soaked pale green or dark brown lesions expanding rapidly with white moldy growth on leaf undersides in cool, humid conditions.",
+        "prevention": "Plant resistant tomato cultivars; destroy volunteer potatoes and tomatoes; maximize row spacing and sunlight.",
+        "treatment": "Apply preventative fungicides immediately when local alerts are triggered; destroy heavily infected plants to stop spore dispersal. Consult local agricultural extension officer urgently.",
+        "source_citation": "Cornell University - Late Blight Management in Tomatoes",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Leaf_Mold",
+        "plant_name": "Tomato",
+        "disease_name": "Leaf Mold (Passalora fulva)",
+        "symptoms": "Pale yellow chlorotic patches on upper leaf surface corresponding to velvety olive-green to grayish fungal growth on lower surface.",
+        "prevention": "Maintain relative humidity below 85% in greenhouse/tunnel setups; space plants and prune lower leaves for ventilation.",
+        "treatment": "Apply registered protectant or systemic fungicides upon first symptoms in greenhouse settings. Consult local agricultural extension officer for greenhouse label compliance.",
+        "source_citation": "University of Minnesota Extension - Tomato Leaf Mold Management",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Septoria_leaf_spot",
+        "plant_name": "Tomato",
+        "disease_name": "Septoria Leaf Spot (Septoria lycopersici)",
+        "symptoms": "Numerous small circular spots with dark brown margins and grayish-white centers dotted with tiny black pycnidia.",
+        "prevention": "Avoid overhead watering; mulch under plants; clean stakes and cages; rotate away from solanaceous plants for 2-3 seasons.",
+        "treatment": "Remove diseased lower leaves; apply protectant fungicides beginning at transplant or first symptom appearance. Consult local agricultural extension officer for spray schedules.",
+        "source_citation": "Missouri Botanical Garden / MU Extension - Septoria Leaf Spot of Tomato",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Spider_mites Two-spotted_spider_mite",
+        "plant_name": "Tomato",
+        "disease_name": "Two-Spotted Spider Mites (Tetranychus urticae)",
+        "symptoms": "Fine yellow or white stippling on upper leaf surface, fine webbing on leaf undersides, leaves bronzing and drying out.",
+        "prevention": "Maintain adequate irrigation to reduce plant water stress; avoid broad-spectrum insecticides that kill natural mite predators; control dusty field borders.",
+        "treatment": "Spray insecticidal soaps, neem oil, or release predatory mites (Phytoseiidae). Consult local agricultural extension officer for miticide options in heavy infestations.",
+        "source_citation": "UC Davis IPM - Spider Mites in Tomato (2023)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Target_Spot",
+        "plant_name": "Tomato",
+        "disease_name": "Target Spot (Corynespora cassiicola)",
+        "symptoms": "Small brown circular lesions that expand with faint concentric zones and light brown centers, leading to significant defoliation.",
+        "prevention": "Ensure good canopy ventilation through staking and pruning; eliminate weed hosts; avoid excessive nitrogen fertilization.",
+        "treatment": "Apply approved protectant fungicides at symptom onset. Consult local agricultural extension officer for fungicide rotation strategy.",
+        "source_citation": "University of Florida IFAS - Target Spot of Tomato (PP-274)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+        "plant_name": "Tomato",
+        "disease_name": "Tomato Yellow Leaf Curl Virus (TYLCV)",
+        "symptoms": "Severe plant stunting, erect growth habit, upward cupping/curling of leaves with chlorotic margins, and flower drop.",
+        "prevention": "Plant TYLCV-resistant hybrids; install fine insect netting (50-mesh); control whitefly (Bemisia tabaci) vectors with yellow sticky traps; rogue infected plants.",
+        "treatment": "No antiviral chemical cure exists; manage vector populations with insecticidal soap or selective insecticides. Consult local agricultural extension officer for vector control protocol.",
+        "source_citation": "FAO Plant Production & Protection - Whitefly-Transmitted Geminiviruses",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___Tomato_mosaic_virus",
+        "plant_name": "Tomato",
+        "disease_name": "Tomato Mosaic Virus (ToMV)",
+        "symptoms": "Light and dark green mosaic or mottling on leaves, leaf distortion, blister-like raised areas, and 'shoestring' leaf appearance.",
+        "prevention": "Plant ToMV-resistant cultivars; sanitize tools with 10% trisodium phosphate (TSP) or skim milk; wash hands before handling plants; do not use tobacco near crops.",
+        "treatment": "No cure exists for viral infection; immediately remove and safely destroy infected plants to stop mechanical spread. Consult local agricultural extension officer.",
+        "source_citation": "UC Davis IPM - Tomato Mosaic Virus (2024)",
+        "needs_review": 0,
+    },
+    {
+        "disease_class": "Tomato___healthy",
+        "plant_name": "Tomato",
+        "disease_name": "Healthy Foliage",
+        "symptoms": "Vigorous, dark-green foliage with clean leaflets and healthy blossom clusters.",
+        "prevention": "Provide consistent deep watering, balanced calcium-rich nutrition, staking, and regular scouting.",
+        "treatment": "No treatment required. Maintain standard integrated crop management.",
+        "source_citation": "FAO Tomato Integrated Pest Management Manual (2023)",
+        "needs_review": 0,
+    },
+]
+
+
+def init_and_seed_database(db_path: Path = DB_PATH, schema_path: Path = SCHEMA_PATH) -> None:
+    """Initializes SQLite tables and seeds curated recommendation entries."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+
+    if schema_path.exists():
+        with open(schema_path, "r", encoding="utf-8") as f:
+            cursor.executescript(f.read())
+
+    now = datetime.now().strftime("%Y-%m-%d")
+    inserted = 0
+
+    for entry in SEED_ENTRIES:
+        cursor.execute(
+            """
+            INSERT INTO recommendations (
+                disease_class, plant_name, disease_name, symptoms, prevention, treatment, source_citation, needs_review, last_reviewed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(disease_class) DO UPDATE SET
+                plant_name=excluded.plant_name,
+                disease_name=excluded.disease_name,
+                symptoms=excluded.symptoms,
+                prevention=excluded.prevention,
+                treatment=excluded.treatment,
+                source_citation=excluded.source_citation,
+                needs_review=excluded.needs_review,
+                last_reviewed=excluded.last_reviewed
+            """,
+            (
+                entry["disease_class"],
+                entry["plant_name"],
+                entry["disease_name"],
+                entry["symptoms"],
+                entry["prevention"],
+                entry["treatment"],
+                entry["source_citation"],
+                entry.get("needs_review", 0),
+                now,
+            ),
+        )
+        inserted += 1
+
+    conn.commit()
+    conn.close()
+    logger.info(f"Database initialized and seeded {inserted} verified knowledge base entries in {db_path}")
+
+
+if __name__ == "__main__":
+    init_and_seed_database()

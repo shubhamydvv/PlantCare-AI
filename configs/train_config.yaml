@@ -1,0 +1,76 @@
+# PlantCare AI - Unified Configuration File
+
+project:
+  name: "PlantCare-AI"
+  seed: 42
+  device: "cuda" # fallback to cpu if cuda unavailable
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  robustness_dir: "data/robustness_test_set"
+  image_size: 224
+  train_split: 0.70
+  val_split: 0.15
+  test_split: 0.15
+  normalization:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  augmentation:
+    horizontal_flip: true
+    vertical_flip: true
+    rotation_degrees: 15
+    color_jitter:
+      brightness: 0.1
+      contrast: 0.1
+      saturation: 0.1
+      hue: 0.05
+
+models:
+  architectures:
+    - name: "resnet50"
+      pretrained: true
+      lr: 0.0005
+      weight_decay: 0.0001
+      batch_size: 32
+      epochs: 10
+      grad_cam_layer: "layer4"
+    - name: "efficientnet_b0"
+      pretrained: true
+      lr: 0.0005
+      weight_decay: 0.0001
+      batch_size: 32
+      epochs: 10
+      grad_cam_layer: "features.8"
+    - name: "vit_b_16"
+      pretrained: true
+      lr: 0.0001
+      weight_decay: 0.00005
+      batch_size: 16
+      epochs: 10
+      attention_layer: "encoder.layers.encoder_layer_11"
+
+training:
+  early_stopping_patience: 3
+  scheduler: "cosine" # cosine or plateau
+  label_smoothing: 0.05
+  num_workers: 2
+
+robustness:
+  brightness:
+    low: -0.40
+    high: 0.40
+  blur:
+    mild_sigma: 1.5
+    heavy_sigma: 3.0
+  rotation:
+    angles: [45, 90, 180]
+  noise:
+    mild_std: 0.05
+    heavy_std: 0.15
+
+app:
+  confidence_threshold: 0.60
+  db_path: "database/plantcare.db"
+  models_dir: "models"
+  results_dir: "results"
