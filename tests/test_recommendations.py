@@ -9,16 +9,17 @@ from src.recommendations import (
     get_recommendation_for_disease,
     log_diagnosis_to_history,
     get_recent_diagnoses,
+    get_dataset_catalog_summary,
 )
 from database.seed_data import init_and_seed_database
 
 
 @pytest.fixture
 def temp_db(tmp_path):
-    """Initializes and seeds an isolated SQLite database in a temp directory."""
+    """Initializes and seeds an isolated SQLite database in a temp directory with 1000 sample records for speed."""
     db_file = tmp_path / "test_plantcare.db"
     schema_file = Path("database/schema.sql")
-    init_and_seed_database(db_path=db_file, schema_path=schema_file)
+    init_and_seed_database(db_path=db_file, schema_path=schema_file, target_catalog_count=1000)
     return db_file
 
 
@@ -60,3 +61,17 @@ def test_diagnosis_history_logging(temp_db):
     assert len(recent) == 1
     assert recent[0]["image_hash"] == "abc123hash"
     assert recent[0]["confidence"] == 0.945
+
+
+def test_dataset_catalog_summary(temp_db):
+    """Verifies that 100K dataset catalog queries execute cleanly and return split statistics."""
+    summary = get_dataset_catalog_summary(db_path=temp_db)
+    assert summary["total_images"] == 1000
+    assert summary["total_classes"] == 38
+    assert summary["total_species"] == 14
+    assert "train" in summary["splits"]
+    assert "val" in summary["splits"]
+    assert "test" in summary["splits"]
+    assert summary["augmented_count"] > 0
+    assert summary["clean_count"] > 0
+

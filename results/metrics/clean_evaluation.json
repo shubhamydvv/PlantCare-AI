@@ -4,7 +4,7 @@
     "precision_macro": 0.0194,
     "recall_macro": 0.0789,
     "f1_macro": 0.0298,
-    "mean_latency_ms": 35.43,
+    "mean_latency_ms": 37.1,
     "brier_score": 0.8954,
     "expected_calibration_error": 0.1302,
     "calibration_info": {
@@ -88,7 +88,7 @@
     "precision_macro": 0.0697,
     "recall_macro": 0.1184,
     "f1_macro": 0.0709,
-    "mean_latency_ms": 13.74,
+    "mean_latency_ms": 13.39,
     "brier_score": 0.8859,
     "expected_calibration_error": 0.0563,
     "calibration_info": {
@@ -172,7 +172,7 @@
     "precision_macro": 0.0239,
     "recall_macro": 0.1096,
     "f1_macro": 0.0375,
-    "mean_latency_ms": 94.02,
+    "mean_latency_ms": 88.97,
     "brier_score": 0.9026,
     "expected_calibration_error": 0.0225,
     "calibration_info": {

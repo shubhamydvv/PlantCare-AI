@@ -1,4 +1,4 @@
-"""PlantCare AI - Interactive Streamlit Web Application with Explainable AI & 3D Visualization."""
+"""PlantCare AI - Interactive Streamlit Web Application with Explainable AI & Calm Botanical Design."""
 
 from __future__ import annotations
 import io
@@ -32,21 +32,29 @@ from src.recommendations import (
     get_recommendation_for_disease,
     log_diagnosis_to_history,
     get_recent_diagnoses,
+    get_dataset_catalog_summary,
 )
+
 try:
-    from components import (
+    from app.components import (
         get_text,
         inject_custom_styles,
+        render_compact_hero,
+        render_workflow_stepper,
+        render_footer_disclaimer,
         render_3d_plant_hero,
         render_3d_xai_leaf,
         render_confidence_indicator,
         render_safety_alert,
         render_history_gallery,
     )
-except ModuleNotFoundError:
-    from app.components import (
+except (ImportError, ModuleNotFoundError):
+    from components import (
         get_text,
         inject_custom_styles,
+        render_compact_hero,
+        render_workflow_stepper,
+        render_footer_disclaimer,
         render_3d_plant_hero,
         render_3d_xai_leaf,
         render_confidence_indicator,
@@ -87,27 +95,37 @@ def load_cached_model(model_name: str):
 # Preset curated sample leaf specimens for instant 1-click testing
 SAMPLE_SPECIMENS = [
     {
-        "label": "🍅 Tomato Leaf (Specimen A)",
+        "emoji": "🍅",
+        "title": "Tomato Specimen",
+        "disease": "Early Blight",
         "file": PROJECT_ROOT / "data" / "robustness_test_set" / "blur_mild" / "deg_00000_sample_0005.jpg",
         "species": "Tomato",
     },
     {
-        "label": "🍎 Apple Leaf (Specimen B)",
+        "emoji": "🍎",
+        "title": "Apple Specimen",
+        "disease": "Apple Scab",
         "file": PROJECT_ROOT / "data" / "robustness_test_set" / "blur_mild" / "deg_00001_sample_0008.jpg",
         "species": "Apple",
     },
     {
-        "label": "🌽 Corn Foliage (Specimen C)",
+        "emoji": "🌽",
+        "title": "Corn Foliage",
+        "disease": "Common Rust",
         "file": PROJECT_ROOT / "data" / "robustness_test_set" / "blur_mild" / "deg_00002_sample_0004.jpg",
         "species": "Corn (maize)",
     },
     {
-        "label": "🍇 Grape Leaf (Specimen D)",
+        "emoji": "🍇",
+        "title": "Grape Leaf",
+        "disease": "Black Rot",
         "file": PROJECT_ROOT / "data" / "robustness_test_set" / "blur_mild" / "deg_00003_sample_0010.jpg",
         "species": "Grape",
     },
     {
-        "label": "🌿 Pepper Foliage (Specimen E)",
+        "emoji": "🫑",
+        "title": "Pepper Foliage",
+        "disease": "Bacterial Spot",
         "file": PROJECT_ROOT / "data" / "robustness_test_set" / "blur_mild" / "deg_00004_sample_0003.jpg",
         "species": "Pepper, bell",
     },
@@ -116,16 +134,16 @@ SAMPLE_SPECIMENS = [
 
 def main():
     # --------------------------------------------------------------------------
-    # SIDEBAR: Configuration, Architecture & Uncertainty Threshold
+    # SIDEBAR: Clean, Grouped Configuration & System Settings
     # --------------------------------------------------------------------------
     with st.sidebar:
         st.markdown(
             """
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;">
-                <span style="font-size: 2.2rem; background: #DCFCE7; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid #86EFAC;">🌿</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #E5E9E2;">
+                <div style="font-size: 1.8rem; background: #EBF2E8; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid #BBF7D0;">🌿</div>
                 <div>
-                    <div style="font-weight: 800; font-size: 1.3rem; color: #064E3B; line-height: 1.1;">PlantCare AI</div>
-                    <div style="font-size: 0.76rem; color: #16A34A; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Clinical XAI Assistant</div>
+                    <div style="font-weight: 800; font-size: 1.18rem; color: #064E3B; line-height: 1.1;">PlantCare AI</div>
+                    <div style="font-size: 0.74rem; color: #059669; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Clinical XAI Core</div>
                 </div>
             </div>
             """,
@@ -139,8 +157,7 @@ def main():
         )
         lang = "hi" if "हिन्दी" in lang_choice else "en"
 
-        st.markdown(f"### ⚙️ {get_text('sidebar_title', lang)}")
-
+        st.markdown(f"#### ⚙️ {get_text('select_model', lang)}")
         model_choice = st.selectbox(
             get_text("select_model", lang),
             ["resnet50", "efficientnet_b0", "vit_b_16"],
@@ -149,8 +166,10 @@ def main():
                 "efficientnet_b0": "EfficientNet-B0 (Lightweight CNN)",
                 "vit_b_16": "ViT-B/16 (Vision Transformer + Rollout)",
             }.get(x, x),
+            label_visibility="collapsed",
         )
 
+        st.markdown(f"#### 🛡️ {get_text('confidence_threshold', lang)}")
         threshold_val = st.slider(
             get_text("confidence_threshold", lang),
             min_value=30,
@@ -158,83 +177,66 @@ def main():
             value=int(CONFIG.get("app", {}).get("confidence_threshold", 0.60) * 100),
             step=5,
             help=get_text("confidence_threshold_help", lang),
+            label_visibility="collapsed",
         )
         conf_threshold = threshold_val / 100.0
 
         st.markdown("---")
-        st.markdown(
-            """
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; font-size: 0.82rem; color: #4B6354; line-height: 1.45;">
-                <strong style="color: #064E3B;">🎓 Academic Research Prototype</strong><br>
-                Department of Computer Science & Engineering<br>
-                <em>Chandigarh University</em><br>
-                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #E2E8F0; font-size: 0.78rem;">
-                    • 38 PlantVillage Pathologies<br>
-                    • PyTorch & Grad-CAM XAI<br>
-                    • SQLite Knowledge Base
+        with st.expander("ℹ️ System & Research Metadata", expanded=False):
+            st.markdown(
+                """
+                <div style="font-size: 0.82rem; color: #4A5E51; line-height: 1.5;">
+                    <strong style="color: #064E3B;">🎓 Academic Research Prototype</strong><br>
+                    Department of Computer Science & Engineering<br>
+                    <em>Chandigarh University</em><br>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #E5E9E2;">
+                        • <strong>Dataset:</strong> ~100,000 Cataloged<br>
+                        • <strong>Classes:</strong> 38 Pathologies<br>
+                        • <strong>Explainability:</strong> Grad-CAM & Attention Rollout<br>
+                        • <strong>Knowledge Base:</strong> FAO / ICAR SQLite
+                    </div>
                 </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                """,
+                unsafe_allow_html=True,
+            )
 
     # --------------------------------------------------------------------------
-    # HERO / LANDING SECTION (With Embedded 3D Procedural Plant)
+    # COMPACT HERO BANNER & HORIZONTAL STEPPER
     # --------------------------------------------------------------------------
-    st.markdown(
-        f"""
-        <div class="plant-hero-container">
-            <div class="plant-hero-badge">🌿 {get_text('app_badge', lang)}</div>
-            <div class="plant-hero-title">{get_text('hero_value_prop', lang)}</div>
-            <div class="plant-hero-desc">{get_text('subtitle', lang)}</div>
-            <div class="workflow-steps-container">
-                <div class="workflow-step">
-                    <div class="workflow-step-icon">📤</div>
-                    <span>{get_text('step_1', lang)}</span>
-                </div>
-                <div class="workflow-step">
-                    <div class="workflow-step-icon">🧠</div>
-                    <span>{get_text('step_2', lang)}</span>
-                </div>
-                <div class="workflow-step">
-                    <div class="workflow-step-icon">🔬</div>
-                    <span>{get_text('step_3', lang)}</span>
-                </div>
-                <div class="workflow-step">
-                    <div class="workflow-step-icon">📋</div>
-                    <span>{get_text('step_4', lang)}</span>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    device = get_device()
+    render_compact_hero(
+        model_name=model_choice,
+        confidence_threshold=conf_threshold,
+        device=str(device),
+        lang=lang,
     )
 
-    # Embed 3D Three.js Procedural Botanical Hero Accent
-    render_3d_plant_hero(height=320)
-
-    # Persistent Research Disclaimer
-    st.warning(get_text("disclaimer", lang))
+    render_workflow_stepper(current_step=1, lang=lang)
 
     # --------------------------------------------------------------------------
-    # MAIN TABS: Diagnosis & XAI | Research Metrics | Diagnosis History
+    # MAIN TABS: Diagnosis & XAI | Research Metrics | Diagnosis History | Big Data DB
     # --------------------------------------------------------------------------
-    tab_diag, tab_metrics, tab_history = st.tabs([
+    tab_diag, tab_metrics, tab_history, tab_db = st.tabs([
         "🔬 Diagnosis & XAI",
         "📊 Research Metrics & Robustness",
         "📜 Diagnosis History",
+        "🗄️ Big Data 100K Catalog & DB",
     ])
 
     # ==========================================================================
     # TAB 1: DIAGNOSIS & EXPLAINABLE AI
     # ==========================================================================
     with tab_diag:
-        # Quick Sample Leaf Selection Tray (One-Click Testing)
+        # Attractive Quick-Test Specimen Cards
         st.markdown(
             f"""
-            <div class="sample-tray-container">
-                <div class="sample-tray-title">⚡ {get_text('sample_tray_title', lang)}</div>
-                <div style="font-size: 0.84rem; color: #4B6354; margin-bottom: 10px;">{get_text('sample_tray_hint', lang)}</div>
+            <div class="specimen-card-box">
+                <div class="specimen-card-header">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.95rem; color: #132A1C;">⚡ {get_text('sample_tray_title', lang)}</div>
+                        <div style="font-size: 0.82rem; color: #7D9285;">{get_text('sample_tray_hint', lang)}</div>
+                    </div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -245,17 +247,21 @@ def main():
 
         for i, spec in enumerate(SAMPLE_SPECIMENS):
             with cols[i]:
-                if st.button(spec["label"], key=f"quick_sample_{i}", use_container_width=True):
+                btn_label = f"{spec['emoji']} {spec['title']}\n({spec['disease']})"
+                if st.button(btn_label, key=f"quick_sample_{i}", use_container_width=True):
                     if spec["file"].exists():
                         with open(spec["file"], "rb") as f:
                             st.session_state["loaded_sample_bytes"] = f.read()
                             st.session_state["loaded_sample_name"] = spec["file"].name
                             st.session_state["selected_sample_species"] = spec["species"]
 
+        st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+
+        # Upload and Camera Input Section
         col_input, col_view = st.columns([1, 1], gap="large")
 
         with col_input:
-            st.markdown(f"### 📤 {get_text('select_plant', lang)}")
+            st.markdown(f"### 📤 {get_text('upload_label', lang)}")
 
             # Species selector
             known_plants = sorted(list(set([c.split("___")[0].replace("_", " ").strip() for c in PLANT_VILLAGE_CLASSES])))
@@ -270,47 +276,52 @@ def main():
                 key="plant_species_select",
             )
 
-            # Upload options with clear drag-and-drop hint
+            # File uploader
             uploaded_file = st.file_uploader(
-                f"{get_text('upload_label', lang)} ({get_text('upload_drag_hint', lang)})",
+                get_text("upload_label", lang),
                 type=["jpg", "jpeg", "png", "webp"],
                 help=get_text("upload_help", lang),
+                key="leaf_file_uploader",
+                label_visibility="collapsed",
             )
-            camera_file = st.camera_input(get_text("camera_label", lang))
 
-            # Determine active image source (Uploaded file, Camera, or Preloaded Sample)
-            active_bytes = None
-            active_name = "upload.jpg"
+            # Camera input
+            camera_img = st.camera_input(
+                get_text("camera_label", lang),
+                key="leaf_camera_input",
+                label_visibility="collapsed",
+            )
+
+            raw_bytes: Optional[bytes] = None
+            filename: str = ""
 
             if uploaded_file is not None:
-                active_bytes = uploaded_file.getvalue()
-                active_name = uploaded_file.name
-            elif camera_file is not None:
-                active_bytes = camera_file.getvalue()
-                active_name = "camera.jpg"
+                raw_bytes = uploaded_file.getvalue()
+                filename = uploaded_file.name
+            elif camera_img is not None:
+                raw_bytes = camera_img.getvalue()
+                filename = "camera_capture.jpg"
             elif "loaded_sample_bytes" in st.session_state:
-                active_bytes = st.session_state["loaded_sample_bytes"]
-                active_name = st.session_state.get("loaded_sample_name", "sample.jpg")
+                raw_bytes = st.session_state["loaded_sample_bytes"]
+                filename = st.session_state.get("loaded_sample_name", "specimen.jpg")
 
+        # Leaf Preview & Primary Action Button
         with col_view:
             st.markdown(f"### 🖼️ {get_text('preview_title', lang)}")
 
-            if active_bytes is not None:
-                is_valid, img, err_msg = validate_image_upload(active_bytes, active_name)
-
+            if raw_bytes is not None:
+                is_valid, img, err = validate_image_upload(raw_bytes, filename)
                 if not is_valid:
-                    st.error(f"❌ Upload Error: {err_msg}")
+                    st.error(f"❌ {err}")
                 else:
-                    # Immediate high-resolution thumbnail preview
-                    st.image(
-                        img,
-                        caption=f"🌿 {get_text('orig_image', lang)} ({active_name})",
-                        use_container_width=True,
-                    )
-                    st.success(f"✅ {get_text('preview_ready', lang)}")
+                    st.image(img, caption=get_text("preview_ready", lang), use_container_width=True)
 
-                    # Primary Diagnose Button
-                    if st.button(get_text("diagnose_btn", lang), type="primary", use_container_width=True):
+                    if st.button(
+                        f"⚡ {get_text('diagnose_btn', lang)}",
+                        key="btn_run_diagnosis",
+                        type="primary",
+                        use_container_width=True,
+                    ):
                         with st.spinner(get_text("analyzing_progress", lang)):
                             model, device = load_cached_model(model_choice)
                             overlay, heatmap, pred_idx, confidence = generate_explanation(
@@ -362,21 +373,21 @@ def main():
             if res["is_uncertain"]:
                 render_safety_alert(lang)
 
-            # High-Impact Clinical Result Card
-            card_class = "diagnosis-result-card uncertain" if res["is_uncertain"] else "diagnosis-result-card"
+            # High-Impact Calm Botanical Result Card
+            card_accent = "#DC2626" if res["is_uncertain"] else "#059669"
             st.markdown(
                 f"""
-                <div class="{card_class}">
+                <div class="botanical-card" style="border-left: 5px solid {card_accent};">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                         <div>
-                            <span style="font-size: 0.88rem; color: #15803D; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: #DCFCE7; padding: 4px 10px; border-radius: 6px; border: 1px solid #86EFAC;">
+                            <span style="font-size: 0.78rem; color: #047857; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: #DCFCE7; padding: 4px 12px; border-radius: 9999px; border: 1px solid #86EFAC;">
                                 🌱 {get_text('plant_species', lang)}: <strong>{res['plant_name']}</strong>
                             </span>
-                            <h2 style="color: #064E3B; margin: 8px 0 6px 0; font-size: 1.85rem; font-family: 'Outfit', sans-serif;">
+                            <h2 style="color: #132A1C; margin: 10px 0 6px 0; font-size: 1.95rem; font-weight: 800; letter-spacing: -0.02em;">
                                 {res['disease_name']}
                             </h2>
-                            <div style="font-size: 0.85rem; color: #64748B;">
-                                AI Architecture: <code>{res['model_choice']}</code> &nbsp;|&nbsp; Status: <strong>{'⚠️ Low Confidence Review' if res['is_uncertain'] else '✅ Verified Prediction'}</strong>
+                            <div style="font-size: 0.84rem; color: #4A5E51;">
+                                Neural Architecture: <code>{res['model_choice']}</code> &nbsp;|&nbsp; Status: <strong>{'⚠️ Low Confidence Review' if res['is_uncertain'] else '✅ High Confidence Verified'}</strong>
                             </div>
                         </div>
                     </div>
@@ -389,7 +400,7 @@ def main():
             render_confidence_indicator(res["confidence"], threshold=conf_threshold, lang=lang)
 
             # ------------------------------------------------------------------
-            # STRUCTURED DRILL-DOWN TABS (XAI image always visible in Tab 1)
+            # STRUCTURED DRILL-DOWN TABS
             # ------------------------------------------------------------------
             res_tab_xai, res_tab_symptoms, res_tab_prev, res_tab_treat, res_tab_cite = st.tabs([
                 get_text("tab_xai", lang),
@@ -401,7 +412,7 @@ def main():
 
             rec = get_recommendation_for_disease(res["pred_class"])
 
-            # TAB 1: EXPLAINABLE AI VISUAL ATTENTION (VISIBLE BY DEFAULT)
+            # TAB 1: EXPLAINABLE AI VISUAL ATTENTION
             with res_tab_xai:
                 st.markdown(f"### {get_text('xai_title', lang)}")
                 st.info(get_text("xai_desc", lang))
@@ -420,7 +431,7 @@ def main():
                         use_container_width=True,
                     )
 
-                # Interactive 3D Saliency Model (Stretch Goal)
+                # Interactive 3D Saliency Model
                 st.markdown("#### 🌿 3D Specimen Lesion Attention Spotlight")
                 render_3d_xai_leaf(
                     confidence=res["confidence"],
@@ -428,13 +439,13 @@ def main():
                     height=280,
                 )
 
-            # TAB 2: SYMPTOMS & PATHOLOGY
+            # TAB 2: CLINICAL SYMPTOMS
             with res_tab_symptoms:
                 st.markdown(f"### {get_text('symptoms', lang)}")
                 st.markdown(
                     f"""
-                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 22px; font-size: 1.02rem; line-height: 1.6; color: #14281D; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-                        🔍 <strong>Clinical Diagnostic Indicators:</strong><br><br>
+                    <div class="botanical-card" style="font-size: 0.98rem; line-height: 1.65; color: #132A1C;">
+                        <div style="font-weight: 700; color: #059669; margin-bottom: 8px;">🔍 Pathological Symptoms Profile:</div>
                         {rec.get('symptoms', 'No specific symptoms recorded for this class.')}
                     </div>
                     """,
@@ -446,8 +457,8 @@ def main():
                 st.markdown(f"### {get_text('prevention', lang)}")
                 st.markdown(
                     f"""
-                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px; padding: 22px; font-size: 1.02rem; line-height: 1.6; color: #14532D; box-shadow: 0 2px 8px rgba(22, 163, 74, 0.04);">
-                        🛡️ <strong>Recommended Cultural & Preventative Practices:</strong><br><br>
+                    <div class="botanical-card" style="font-size: 0.98rem; line-height: 1.65; color: #064E3B; background: #F0FDF4; border-color: #BBF7D0;">
+                        <div style="font-weight: 700; color: #047857; margin-bottom: 8px;">🛡️ Recommended Cultural & Preventative Protocol:</div>
                         {rec.get('prevention', 'General crop sanitation and canopy spacing recommended.')}
                     </div>
                     """,
@@ -459,8 +470,8 @@ def main():
                 st.markdown(f"### {get_text('treatment', lang)}")
                 st.markdown(
                     f"""
-                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 14px; padding: 22px; font-size: 1.02rem; line-height: 1.6; color: #92400E; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.04);">
-                        💊 <strong>Agronomic Guidance & Product Recommendations:</strong><br><br>
+                    <div class="botanical-card" style="font-size: 0.98rem; line-height: 1.65; color: #92400E; background: #FEF3C7; border-color: #FDE68A;">
+                        <div style="font-weight: 700; color: #B45309; margin-bottom: 8px;">💊 Agronomic Guidance & Product Recommendations:</div>
                         {rec.get('treatment', 'Consult extension officer for approved local fungicides and dosage rates.')}
                     </div>
                     """,
@@ -544,6 +555,52 @@ EXTENSION CITATION:
         st.markdown(f"### 📜 {get_text('recent_history', lang)}")
         history_records = get_recent_diagnoses(limit=30)
         render_history_gallery(history_records, lang=lang)
+
+    # ==========================================================================
+    # TAB 4: BIG DATA 100K IMAGE CATALOG & KNOWLEDGE BASE DATABASE
+    # ==========================================================================
+    with tab_db:
+        st.markdown("### 🗄️ Big Data 100,000 Image Catalog & Knowledge Base")
+        st.caption("SQLite High-Throughput Relational Storage with Indexed Partitions & Provenance Tracking")
+
+        db_stats = get_dataset_catalog_summary()
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("Total Cataloged Images", f"{db_stats.get('total_images', 0):,}")
+        with c2:
+            st.metric("Disease Classes", f"{db_stats.get('total_classes', 0)}")
+        with c3:
+            st.metric("Plant Species", f"{db_stats.get('total_species', 0)}")
+        with c4:
+            st.metric("Dataset Footprint", f"{db_stats.get('total_dataset_gb', 0):.2f} GB")
+
+        splits = db_stats.get("splits", {})
+        col_s1, col_s2, col_s3 = st.columns(3)
+        with col_s1:
+            st.metric("Train Split (70%)", f"{splits.get('train', 0):,} images")
+        with col_s2:
+            st.metric("Val Split (15%)", f"{splits.get('val', 0):,} images")
+        with col_s3:
+            st.metric("Test Split (15%)", f"{splits.get('test', 0):,} images")
+
+        st.markdown("---")
+        st.markdown("#### 🔍 Interactive Dataset Catalog Inspector")
+        try:
+            import sqlite3
+            conn = sqlite3.connect(str(DB_PATH))
+            preview_df = pd.read_sql_query(
+                "SELECT image_uid, file_path, dataset_source, plant_name, disease_class, split_type, is_augmented, augmentation_type, file_size_kb, quality_score FROM image_dataset LIMIT 25",
+                conn,
+            )
+            st.dataframe(preview_df, use_container_width=True)
+            conn.close()
+        except Exception as err:
+            st.warning(f"Could not load image catalog preview: {err}")
+
+    # --------------------------------------------------------------------------
+    # SUBTLE FOOTER DISCLAIMER BANNER
+    # --------------------------------------------------------------------------
+    render_footer_disclaimer(lang=lang)
 
 
 if __name__ == "__main__":

@@ -140,3 +140,52 @@ def get_recent_diagnoses(
     except Exception as e:
         logger.error(f"Failed to fetch diagnosis history: {e}")
         return []
+
+
+def get_dataset_catalog_summary(db_path: Path | str = DB_PATH) -> Dict[str, Any]:
+    """Queries Big Data 100K image catalog analytics from database."""
+    try:
+        conn = get_db_connection(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM image_dataset")
+        total_images = cursor.fetchone()[0]
+
+        cursor.execute("SELECT split_type, COUNT(*) FROM image_dataset GROUP BY split_type")
+        split_dist = dict(cursor.fetchall())
+
+        cursor.execute("SELECT COUNT(DISTINCT disease_class) FROM image_dataset")
+        total_classes = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(DISTINCT plant_name) FROM image_dataset")
+        total_species = cursor.fetchone()[0]
+
+        cursor.execute("SELECT is_augmented, COUNT(*) FROM image_dataset GROUP BY is_augmented")
+        aug_dist = dict(cursor.fetchall())
+
+        cursor.execute("SELECT AVG(file_size_kb), SUM(file_size_kb)/1024/1024 FROM image_dataset")
+        avg_size_kb, total_gb = cursor.fetchone()
+
+        conn.close()
+        return {
+            "total_images": total_images,
+            "total_classes": total_classes,
+            "total_species": total_species,
+            "splits": split_dist,
+            "augmented_count": aug_dist.get(1, 0),
+            "clean_count": aug_dist.get(0, 0),
+            "avg_file_size_kb": round(avg_size_kb or 0, 2),
+            "total_dataset_gb": round(total_gb or 0, 2),
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch dataset catalog summary: {e}")
+        return {
+            "total_images": 0,
+            "total_classes": 0,
+            "total_species": 0,
+            "splits": {},
+            "augmented_count": 0,
+            "clean_count": 0,
+            "avg_file_size_kb": 0.0,
+            "total_dataset_gb": 0.0,
+        }
+

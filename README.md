@@ -76,8 +76,8 @@ PlantCare-AI/
 
 ### 1. Clone & Set Up Environment
 ```bash
-git clone https://github.com/shubhamydvv/PlantCare-AI.git
-cd PlantCare-AI
+git clone https://github.com/shubhamydvv/COMPUTER-AIDED-RECOGNITION-OF-ALZHEIMER-DISEASE.git
+cd COMPUTER-AIDED-RECOGNITION-OF-ALZHEIMER-DISEASE
 
 # Create and activate virtual environment
 python -m venv .venv
