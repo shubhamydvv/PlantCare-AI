@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: PlantCare AI CI Pipeline
 
 on:
   push:
