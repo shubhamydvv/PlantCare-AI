@@ -172,17 +172,44 @@ def run_full_evaluation(
     model_names: Optional[List[str]] = None,
     device_name: Optional[str] = None,
     seed: int = 42,
+    require_real_data: bool = True,
+    require_checkpoints: bool = True,
 ) -> Dict[str, Any]:
     """
     Runs complete evaluation suite across clean test set and all 9 robustness variants for all specified models.
+
+    Args:
+        require_real_data: If True (default), raises an error when the test set has fewer than
+            500 images, which is the signature of mock/synthetic data being used instead of
+            the real PlantVillage dataset. Set False only for deliberate dry-run testing.
+        require_checkpoints: If True (default), raises an error when a trained checkpoint is
+            missing rather than silently falling back to an untrained pretrained baseline.
+            The fallback produces near-random accuracy (7-13%) that looks like a trained result.
+            Set False only if you explicitly want to evaluate ImageNet pretrained baselines.
     """
     set_seed(seed)
     device = torch.device(device_name) if device_name else get_device()
     target_models = model_names or ["resnet50", "efficientnet_b0", "vit_b_16"]
 
     splits = load_or_create_splits(seed=seed)
-    robustness_manifest = load_or_generate_robustness_manifest(seed=seed)
     num_classes = splits["num_classes"]
+
+    # Guard: detect mock/synthetic data masquerading as real PlantVillage
+    test_size = len(splits["test"]["image_paths"])
+    if require_real_data and test_size < 500:
+        raise RuntimeError(
+            f"\n\nEVALUATION ABORTED — test set has only {test_size} images.\n"
+            f"This is the signature of synthetic mock data (15 images/class x 38 classes = 570 total).\n"
+            f"The real PlantVillage dataset produces ~8,100 test images (15% of ~54,300 total).\n"
+            f"\nAction required:\n"
+            f"  1. Download PlantVillage from Kaggle: https://www.kaggle.com/datasets/emmarex/plantdisease\n"
+            f"  2. Extract class folders into data/raw/\n"
+            f"  3. Delete data/processed/split_info.json (stale mock splits)\n"
+            f"  4. Re-run evaluation\n"
+            f"\nTo bypass this guard (dry-run only): pass require_real_data=False"
+        )
+
+    robustness_manifest = load_or_generate_robustness_manifest(seed=seed)
 
     results: Dict[str, Any] = {
         "clean_evaluations": {},
@@ -196,7 +223,21 @@ def run_full_evaluation(
     for model_name in target_models:
         ckpt_path = MODELS_DIR / model_name / "best_model.pth"
         if not ckpt_path.exists():
-            logger.warning(f"Checkpoint for {model_name} not found at {ckpt_path}. Initializing pretrained baseline...")
+            if require_checkpoints:
+                raise FileNotFoundError(
+                    f"\n\nEVALUATION ABORTED — no trained checkpoint found for '{model_name}'\n"
+                    f"Expected: {ckpt_path}\n"
+                    f"\nThe previous run evaluated an untrained ImageNet pretrained model, which\n"
+                    f"produces near-random accuracy (7-13%) on PlantVillage (38 classes).\n"
+                    f"\nAction required: train the model first:\n"
+                    f"  python -m src.train --model {model_name}\n"
+                    f"  (or use the Colab training script: notebooks/colab_training_script.py)\n"
+                    f"\nTo bypass this guard: pass require_checkpoints=False"
+                )
+            logger.warning(
+                f"No checkpoint for '{model_name}' at {ckpt_path}. "
+                f"Evaluating ImageNet pretrained baseline (NOT fine-tuned — results will be near-random)."
+            )
             model = get_model(model_name, num_classes=num_classes, pretrained=True)
             model.to(device)
         else:
